@@ -1,0 +1,50 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_TaiKhoan {
+    
+    public ResultSet kiemTraDangNhap(String maTK, String matKhau, StringBuilder quyen) {
+        String query = "SELECT * FROM TaiKhoan WHERE MaTK = ? AND MatKhau = ?";
+        
+        try {
+            // Sử dụng PreparedStatement thông qua DataProvider
+            ResultSet result = DataProvider.getData(query, maTK, matKhau);
+            
+            if (result != null && result.next()) {
+                quyen.append(result.getString("Quyen"));
+                result.beforeFirst(); // Reset con trỏ về đầu để đọc lại
+            } else {
+                quyen.setLength(0); // Clear StringBuilder
+            }
+            
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            quyen.setLength(0); // Clear StringBuilder trong trường hợp lỗi
+            return null;
+        }
+    }
+
+    // Phương thức test
+    public static void main(String[] args) {
+        DAL_TaiKhoan dalTaiKhoan = new DAL_TaiKhoan();
+        StringBuilder quyen = new StringBuilder();
+        
+        try {
+            ResultSet rs = dalTaiKhoan.kiemTraDangNhap("ADMIN", "12345", quyen);
+            if (rs != null) {
+                while (rs.next()) {
+                    System.out.println("MaTK: " + rs.getString("MaTK"));
+                    System.out.println("MatKhau: " + rs.getString("MatKhau"));
+                    System.out.println("Quyen: " + quyen.toString());
+                }
+            } else {
+                System.out.println("Không tìm thấy tài khoản!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

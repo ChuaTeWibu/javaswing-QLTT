@@ -1,0 +1,74 @@
+package dbconect;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
+
+public class DatabaseConnection {
+
+    // Cấu hình thông tin kết nối MySQL
+    static String url = "jdbc:mysql://localhost:3306/quanlytrungtam";
+    static String user = "root";
+    static String password = "tohkaty01";
+
+    // Tải driver MySQL (nên có để đảm bảo driver được nhận diện)
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("MySQL Driver not found! Check your library.", e);
+        }
+    }
+
+    // Tạo PreparedStatement với tham số
+    public static PreparedStatement getStmt(String sql, Object... args) throws Exception {
+        Connection con = DriverManager.getConnection(url, user, password); // Tạo kết nối
+        PreparedStatement stmt;
+
+        if (sql.trim().startsWith("{")) {
+            stmt = con.prepareCall(sql); // Dành cho thủ tục lưu (stored procedures)
+        } else {
+            stmt = con.prepareStatement(sql); // Dành cho câu lệnh SQL thông thường
+        }
+
+        // Thiết lập tham số vào PreparedStatement
+        for (int i = 0; i < args.length; i++) {
+            stmt.setObject(i + 1, args[i]); // Thiết lập tham số
+        }
+
+        return stmt;
+    }
+
+    // Phương thức thực thi lệnh cập nhật (INSERT, UPDATE, DELETE)
+    public static int update(String sql, Object... args) {
+        // Sử dụng try-with-resources để tự động đóng kết nối
+        try (PreparedStatement stmt = getStmt(sql, args)) {
+            return stmt.executeUpdate(); // Thực thi lệnh UPDATE/INSERT/DELETE
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing update: " + e.getMessage(), e);
+        }
+    }
+
+    // Phương thức thực thi lệnh truy vấn (SELECT)
+    public static ResultSet query(String sql, Object... args) throws Exception {
+        // Sử dụng try-with-resources để tự động đóng kết nối
+        PreparedStatement stmt = getStmt(sql, args);
+        return stmt.executeQuery(); // Trả về kết quả dạng ResultSet
+    }
+
+    // Phương thức main để kiểm tra kết nối
+    public static void main(String[] args) {
+        // Kiểm tra kết nối và thực hiện một câu truy vấn SELECT đơn giản
+        String query = "SELECT * FROM your_table"; // Thay your_table bằng tên bảng của bạn
+        try (ResultSet rs = query(query)) {
+            while (rs.next()) {
+                System.out.println("Data from DB: " + rs.getString(1)); // In dữ liệu (cột đầu tiên)
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // In lỗi nếu có
+        }
+    }
+}

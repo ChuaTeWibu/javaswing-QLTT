@@ -1,0 +1,138 @@
+package dbconect;
+
+import java.sql.*;
+
+/**
+ * Lớp xử lý các thao tác với lớp học trong database
+ * Bao gồm các chức năng: tìm kiếm lớp học, quản lý học viên trong lớp
+ */
+public class DAL_LopHoc {
+    
+    /**
+     * Lấy danh sách lớp học theo mã lớp
+     * @param maLH Mã lớp học cần tìm
+     * @return ResultSet chứa thông tin lớp học và các thông tin liên quan
+     */
+    public ResultSet danhSachLopHoc(String maLH) {
+        String query = "SELECT a.MaLH, a.MaMH, b.TenMH, a.MaGV, c.TenGV, " +
+                      "a.NgayBatDau, a.NgayKetThuc, a.SoBuoi " +
+                      "FROM LopHoc a " +
+                      "LEFT JOIN MonHoc b ON a.MaMH = b.MaMH " +
+                      "LEFT JOIN GiaoVien c ON a.MaGV = c.MaGV " +
+                      "WHERE a.MaLH LIKE ?";
+        try {
+            return DataProvider.getData(query, "%" + maLH + "%");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Lấy danh sách học viên trong một lớp học
+     * @param maLH Mã lớp học cần xem danh sách
+     * @return ResultSet chứa thông tin các học viên trong lớp
+     */
+    public ResultSet danhSachHocVienTheoLop(String maLH) {
+        String query = "SELECT b.* FROM LopHoc_HocVien a " +
+                      "LEFT JOIN HocVien b ON a.MaHV = b.MaHV " +
+                      "WHERE a.MaLH = ?";
+        try {
+            return DataProvider.getData(query, maLH);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Thêm lớp học mới
+     * @param maLH Mã lớp học
+     * @param maMH Mã môn học
+     * @param maGV Mã giáo viên
+     * @param ngayBatDau Ngày bắt đầu khóa học
+     * @param ngayKetThuc Ngày kết thúc khóa học
+     * @param soBuoi Số buổi học
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean themLopHoc(String maLH, String maMH, String maGV, 
+            String ngayBatDau, String ngayKetThuc, double soBuoi) {
+        String query = "INSERT INTO LopHoc(MaLH, MaMH, MaGV, NgayBatDau, NgayKetThuc, SoBuoi) " +
+                      "VALUES (?, ?, ?, ?, ?, ?)";
+        return DataProvider.executeNonQuery(query, maLH, maMH, maGV, 
+                ngayBatDau, ngayKetThuc, soBuoi);
+    }
+    
+    /**
+     * Cập nhật thông tin lớp học
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    public boolean suaLopHoc(String maLH, String maMH, String maGV, 
+            String ngayBatDau, String ngayKetThuc, double soBuoi) {
+        String query = "UPDATE LopHoc SET MaMH = ?, MaGV = ?, NgayBatDau = ?, " +
+                      "NgayKetThuc = ?, SoBuoi = ? WHERE MaLH = ?";
+        return DataProvider.executeNonQuery(query, maMH, maGV, ngayBatDau, 
+                ngayKetThuc, soBuoi, maLH);
+    }
+    
+    /**
+     * Xóa lớp học và danh sách học viên trong lớp
+     * @param maLH Mã lớp học cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean xoaLopHoc(String maLH) {
+        String query = "DELETE FROM LopHoc WHERE MaLH = ?; " +
+                      "DELETE FROM LopHoc_HocVien WHERE MaLH = ?";
+        return DataProvider.executeNonQuery(query, maLH, maLH);
+    }
+    
+    /**
+     * Thêm học viên vào lớp học
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean themLopHoc_HocVien(String maLH, String maHV) {
+        String query = "INSERT INTO LopHoc_HocVien(MaLH, MaHV) VALUES (?, ?)";
+        return DataProvider.executeNonQuery(query, maLH, maHV);
+    }
+    
+    /**
+     * Xóa học viên khỏi lớp học
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean xoaLopHoc_HocVien(String maLH, String maHV) {
+        String query = "DELETE FROM LopHoc_HocVien WHERE MaLH = ? AND MaHV = ?";
+        return DataProvider.executeNonQuery(query, maLH, maHV);
+    }
+
+    /**
+     * Phương thức test các chức năng
+     */
+//    public static void main(String[] args) {
+//        DAL_LopHoc dal = new DAL_LopHoc();
+//        
+//        // Test tìm kiếm lớp học
+//        System.out.println("=== Test tìm kiếm lớp học ===");
+//        try {
+//            ResultSet rs = dal.danhSachLopHoc("");
+//            if (rs != null) {
+//                boolean coKetQua = false;
+//                while (rs.next()) {
+//                    coKetQua = true;
+//                    System.out.println("\nThông tin lớp học:");
+//                    System.out.println("Mã lớp: " + rs.getString("MaLH"));
+//                    System.out.println("Môn học: " + rs.getString("TenMH"));
+//                    System.out.println("Giáo viên: " + rs.getString("TenGV"));
+//                    System.out.println("Ngày bắt đầu: " + rs.getString("NgayBatDau"));
+//                    System.out.println("Ngày kết thúc: " + rs.getString("NgayKetThuc"));
+//                    System.out.println("Số buổi: " + rs.getDouble("SoBuoi"));
+//                    System.out.println("---------------");
+//                }
+//                if (!coKetQua) {
+//                    System.out.println("Không tìm thấy lớp học nào!");
+//                }
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//    }
+}

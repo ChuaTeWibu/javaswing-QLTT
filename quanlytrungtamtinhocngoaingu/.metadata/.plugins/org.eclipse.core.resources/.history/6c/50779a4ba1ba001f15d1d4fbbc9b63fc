@@ -1,0 +1,116 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_LopHoc {
+    
+	public ResultSet getDanhSachLopHoc(String tenLop) throws SQLException {
+	    String sql = """
+	        SELECT LopHoc.MaLop, MonHoc.TenMH, GiaoVien.TenGV, 
+	               LopHoc.NgayBatDau, LopHoc.NgayKetThuc, LopHoc.SoBuoi
+	        FROM LopHoc 
+	        INNER JOIN MonHoc ON LopHoc.MaMH = MonHoc.MaMH
+	        INNER JOIN GiaoVien ON LopHoc.MaGV = GiaoVien.MaGV
+	        WHERE LopHoc.MaLop LIKE ?
+	    """;
+	    return DataProvider.getData(sql, "%" + tenLop + "%");
+	}
+    
+    /**
+     * Lấy danh sách môn học
+     */
+    public ResultSet getDanhSachMonHoc() throws SQLException {
+        String sql = "SELECT MaMH, TenMH FROM MonHoc";
+        return DataProvider.getData(sql);
+    }
+    
+    /**
+     * Lấy danh sách giáo viên
+     */
+    public ResultSet getDanhSachGiaoVien() throws SQLException {
+        String sql = "SELECT MaGV, TenGV FROM GiaoVien";
+        return DataProvider.getData(sql);
+    }
+    
+    /**
+     * Lấy danh sách học viên
+     */
+    public ResultSet getDanhSachHocVien() throws SQLException {
+        String sql = "SELECT MaHV, TenHV FROM HocVien";
+        return DataProvider.getData(sql);
+    }
+    
+    /**
+     * Lấy danh sách học viên trong lớp
+     */
+    public ResultSet getDanhSachHocVienTrongLop(String maLop) throws SQLException {
+        String sql = """
+            SELECT hv.MaHV, hv.TenHV, hv.DienThoai, hv.DiaChi
+            FROM HocVien hv 
+            JOIN LopHoc_HocVien lhv ON hv.MaHV = lhv.MaHV
+            WHERE lhv.MaLop = ?
+        """;
+        return DataProvider.getData(sql, maLop);
+    }
+    
+    /**
+     * Thêm lớp học mới
+     */
+    public boolean themLopHoc(String maLop, String maMH, String maGV, 
+            Date ngayBD, Date ngayKT, int soBuoi) throws SQLException {
+        String sql = """
+            INSERT INTO LopHoc(MaLop, MaMH, MaGV, NgayBatDau, NgayKetThuc, SoBuoi)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """;
+        return DataProvider.executeNonQuery(sql, maLop, maMH, maGV, ngayBD, ngayKT, soBuoi);
+    }
+    
+    /**
+     * Cập nhật thông tin lớp học
+     */
+    public boolean suaLopHoc(String maLop, String maMH, String maGV,
+            Date ngayBD, Date ngayKT, int soBuoi) throws SQLException {
+        String sql = """
+            UPDATE LopHoc 
+            SET MaMH = ?, MaGV = ?, NgayBatDau = ?, NgayKetThuc = ?, SoBuoi = ?
+            WHERE MaLop = ?
+        """;
+        return DataProvider.executeNonQuery(sql, maMH, maGV, ngayBD, ngayKT, soBuoi, maLop);
+    }
+    
+    /**
+     * Xóa lớp học
+     */
+    public boolean xoaLopHoc(String maLop) throws SQLException {
+        // Xóa học viên khỏi lớp trước
+        String sql1 = "DELETE FROM LopHoc_HocVien WHERE MaLop = ?";
+        DataProvider.executeNonQuery(sql1, maLop);
+        
+        // Sau đó xóa lớp
+        String sql2 = "DELETE FROM LopHoc WHERE MaLop = ?";
+        return DataProvider.executeNonQuery(sql2, maLop);
+    }
+    
+    /**
+     * Thêm học viên vào lớp
+     */
+    public boolean themHocVienVaoLop(String maLop, String maHV) throws SQLException {
+        // Kiểm tra học viên đã có trong lớp chưa
+        String sqlCheck = "SELECT COUNT(*) FROM LopHoc_HocVien WHERE MaLop = ? AND MaHV = ?";
+        ResultSet rs = DataProvider.getData(sqlCheck, maLop, maHV);
+        if (rs.next() && rs.getInt(1) > 0) {
+            throw new SQLException("Học viên đã có trong lớp này!");
+        }
+        
+        String sql = "INSERT INTO LopHoc_HocVien(MaLop, MaHV) VALUES (?, ?)";
+        return DataProvider.executeNonQuery(sql, maLop, maHV);
+    }
+    
+    /**
+     * Xóa học viên khỏi lớp
+     */
+    public boolean xoaHocVienKhoiLop(String maLop, String maHV) throws SQLException {
+        String sql = "DELETE FROM LopHoc_HocVien WHERE MaLop = ? AND MaHV = ?";
+        return DataProvider.executeNonQuery(sql, maLop, maHV);
+    }
+}

@@ -1,0 +1,88 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_HocVien {
+    
+    /**
+     * Lấy danh sách học viên theo tên
+     * @param tenHV Tên học viên cần tìm
+     * @return ResultSet chứa danh sách học viên phù hợp
+     */
+    public ResultSet danhSachHocVien(String tenHV) {
+        // Câu truy vấn tìm kiếm học viên theo tên (tìm kiếm mờ)
+        String query = "SELECT * FROM HocVien WHERE TenHV LIKE ?";
+        return DataProvider.getData(query, "%" + tenHV + "%");
+    }
+    
+    /**
+     * Xóa học viên theo mã
+     * @param maHV Mã học viên cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean xoaHocVien(String maHV) {
+        String query = "DELETE FROM HocVien WHERE MaHV = ?";
+        return DataProvider.executeNonQuery(query, maHV);
+    }
+    
+    /**
+     * Thêm học viên mới
+     * @param maHV Mã học viên
+     * @param tenHV Tên học viên
+     * @param dienThoai Số điện thoại
+     * @param diaChi Địa chỉ
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean themHocVien(String maHV, String tenHV, String dienThoai, String diaChi) {
+        String query = "INSERT INTO HocVien(MaHV, TenHV, DienThoai, DiaChi) VALUES (?, ?, ?, ?)";
+        return DataProvider.executeNonQuery(query, maHV, tenHV, dienThoai, diaChi);
+    }
+    
+    /**
+     * Cập nhật thông tin học viên
+     * @param maHV Mã học viên
+     * @param tenHV Tên học viên mới
+     * @param dienThoai Số điện thoại mới
+     * @param diaChi Địa chỉ mới
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    public boolean suaHocVien(String maHV, String tenHV, String dienThoai, String diaChi) {
+        String query = "UPDATE HocVien SET TenHV = ?, DienThoai = ?, DiaChi = ? WHERE MaHV = ?";
+        return DataProvider.executeNonQuery(query, tenHV, dienThoai, diaChi, maHV);
+    }
+
+    // Phương thức test
+    public static void main(String[] args) {
+        DAL_HocVien dal = new DAL_HocVien();
+        
+        // Test tìm kiếm học viên
+        System.out.println("=== Test tìm kiếm học viên ===");
+        try {
+            ResultSet rs = dal.danhSachHocVien("Nguyen");
+            while (rs != null && rs.next()) {
+                System.out.println("MaHV: " + rs.getString("MaHV"));
+                System.out.println("TenHV: " + rs.getString("TenHV"));
+                System.out.println("DienThoai: " + rs.getString("DienThoai"));
+                System.out.println("DiaChi: " + rs.getString("DiaChi"));
+                System.out.println("---------------");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Test thêm học viên
+        System.out.println("\n=== Test thêm học viên ===");
+        boolean ketQua = dal.themHocVien("HV001", "Nguyen Van A", "0123456789", "Ha Noi");
+        System.out.println("Thêm học viên: " + (ketQua ? "Thành công" : "Thất bại"));
+
+        // Test sửa học viên
+        System.out.println("\n=== Test sửa học viên ===");
+        ketQua = dal.suaHocVien("HV001", "Nguyen Van A Updated", "0987654321", "Ho Chi Minh");
+        System.out.println("Sửa học viên: " + (ketQua ? "Thành công" : "Thất bại"));
+
+        // Test xóa học viên
+        System.out.println("\n=== Test xóa học viên ===");
+        ketQua = dal.xoaHocVien("HV001");
+        System.out.println("Xóa học viên: " + (ketQua ? "Thành công" : "Thất bại"));
+    }
+}

@@ -1,0 +1,59 @@
+package dbconect;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+public class TestTaiKhoan {
+    public static void main(String[] args) {
+        testAllFunctions();
+    }
+    
+    public static void testAllFunctions() {
+        DAL_TaiKhoan dal = new DAL_TaiKhoan();
+        
+        // Test case 1: Đăng nhập thành công
+        System.out.println("=== Test case 1: Đăng nhập thành công ===");
+        testLoginCase(dal, "admin", "admin12", "Kỳ vọng: Đăng nhập thành công");
+        
+        // Test case 2: Sai mật khẩu
+        System.out.println("\n=== Test case 2: Sai mật khẩu ===");
+        testLoginCase(dal, "admin", "wrongpass", "Kỳ vọng: Đăng nhập thất bại");
+        
+        // Test case 3: Tài khoản không tồn tại
+        System.out.println("\n=== Test case 3: Tài khoản không tồn tại ===");
+        testLoginCase(dal, "nonexist", "pass123", "Kỳ vọng: Đăng nhập thất bại");
+        
+        // Test case 4: Input rỗng
+        System.out.println("\n=== Test case 4: Input rỗng ===");
+        testLoginCase(dal, "", "", "Kỳ vọng: Đăng nhập thất bại");
+    }
+    
+    private static void testLoginCase(DAL_TaiKhoan dal, String username, String password, String expectation) {
+        StringBuilder quyen = new StringBuilder();
+        System.out.println("Input:");
+        System.out.println("- Username: " + username);
+        System.out.println("- Password: " + password);
+        System.out.println(expectation);
+        
+        try {
+            ResultSet rs = dal.kiemTraDangNhap(username, password, quyen);
+            System.out.println("\nKết quả thực tế:");
+            
+            if (rs != null) {
+                if (quyen.length() > 0) {
+                    System.out.println("- Đăng nhập thành công");
+                    System.out.println("- Quyền: " + quyen.toString());
+                    
+                    while (rs.next()) {
+                        System.out.println("- MaTK: " + rs.getString("MaTK"));
+                    }
+                } else {
+                    System.out.println("- Đăng nhập thất bại");
+                }
+            } else {
+                System.out.println("- Lỗi kết nối database");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Lỗi: " + e.getMessage());
+        }
+    }
+}

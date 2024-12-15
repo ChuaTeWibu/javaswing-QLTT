@@ -1,0 +1,197 @@
+package gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.ResultSet;
+import java.util.Date;
+import com.toedter.calendar.JDateChooser;
+import dbconect.*;
+
+public class QuanLyLopHocForm extends JFrame {
+    private JPanel mainPanel;
+    private JTable gridview;
+    private JTable gridviewDetail;
+    private DefaultTableModel tableModel;
+    private DefaultTableModel detailTableModel;
+    
+    private JTextField txtMaLH;
+    private JTextField txtTenTKSearch;
+    private JComboBox<String> cboMaMH;
+    private JComboBox<String> cboMaGV;
+    private JComboBox<String> cboMaHV;
+    private JDateChooser dtNgayBatDau;
+    private JDateChooser dtNgayKetThuc;
+    private JSpinner nmSoBuoi;
+    
+    private JButton btnThem;
+    private JButton btnSua;
+    private JButton btnXoa;
+    private JButton btnLuu;
+    private JButton btnHuy;
+    private JButton btnLamMoi;
+    private JButton btnThoat;
+    private JButton btnTim;
+    private JButton btnThemHV;
+    private JButton btnXoaHV;
+    
+    private DAL_LopHoc dal;
+    private DAL_MonHoc dal_mh;
+    private DAL_GiaoVien dal_gv;
+    private DAL_HocVien dal_hv;
+    private boolean luu;
+
+    public QuanLyLopHocForm() {
+        dal = new DAL_LopHoc();
+        dal_mh = new DAL_MonHoc();
+        dal_gv = new DAL_GiaoVien();
+        dal_hv = new DAL_HocVien();
+        
+        initComponents();
+        loadComboBoxData();
+        loadData("");
+        setControlState(true);
+    }
+
+    private void initComponents() {
+        setTitle("Quản lý lớp học");
+        setSize(1000, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Main Panel with split pane
+        mainPanel = new JPanel(new BorderLayout(5, 5));
+        setContentPane(mainPanel);
+
+        // Form Panel (North)
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Add form components
+        addFormComponents(formPanel, gbc);
+
+        // Button Panel
+        JPanel buttonPanel = createButtonPanel();
+
+        // Tables Panel (Center) - Split Pane
+        JSplitPane splitPane = createTablePanels();
+
+        // Search Panel (South)
+        JPanel searchPanel = createSearchPanel();
+
+        // Add all panels to main panel
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        mainPanel.add(searchPanel, BorderLayout.SOUTH);
+
+        // Add event listeners
+        addEventListeners();
+    }
+
+    private void addFormComponents(JPanel panel, GridBagConstraints gbc) {
+        // Mã lớp học
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel.add(new JLabel("Mã lớp học:"), gbc);
+        gbc.gridx = 1;
+        txtMaLH = new JTextField(15);
+        panel.add(txtMaLH, gbc);
+
+        // Môn học
+        gbc.gridx = 2;
+        panel.add(new JLabel("Môn học:"), gbc);
+        gbc.gridx = 3;
+        cboMaMH = new JComboBox<>();
+        panel.add(cboMaMH, gbc);
+
+        // Giáo viên
+        gbc.gridx = 0; gbc.gridy = 1;
+        panel.add(new JLabel("Giáo viên:"), gbc);
+        gbc.gridx = 1;
+        cboMaGV = new JComboBox<>();
+        panel.add(cboMaGV, gbc);
+
+        // Ngày bắt đầu
+        gbc.gridx = 2;
+        panel.add(new JLabel("Ngày bắt đầu:"), gbc);
+        gbc.gridx = 3;
+        dtNgayBatDau = new JDateChooser();
+        dtNgayBatDau.setDateFormatString("dd/MM/yyyy");
+        panel.add(dtNgayBatDau, gbc);
+
+        // Ngày kết thúc
+        gbc.gridx = 0; gbc.gridy = 2;
+        panel.add(new JLabel("Ngày kết thúc:"), gbc);
+        gbc.gridx = 1;
+        dtNgayKetThuc = new JDateChooser();
+        dtNgayKetThuc.setDateFormatString("dd/MM/yyyy");
+        panel.add(dtNgayKetThuc, gbc);
+
+        // Số buổi
+        gbc.gridx = 2;
+        panel.add(new JLabel("Số buổi:"), gbc);
+        gbc.gridx = 3;
+        nmSoBuoi = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+        panel.add(nmSoBuoi, gbc);
+    }
+
+    private JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        btnThem = new JButton("Thêm");
+        btnSua = new JButton("Sửa");
+        btnXoa = new JButton("Xóa");
+        btnLuu = new JButton("Lưu");
+        btnHuy = new JButton("Hủy");
+        btnLamMoi = new JButton("Làm mới");
+        btnThoat = new JButton("Thoát");
+        btnThemHV = new JButton("Thêm học viên");
+        btnXoaHV = new JButton("Xóa học viên");
+        
+        buttonPanel.add(btnThem);
+        buttonPanel.add(btnSua);
+        buttonPanel.add(btnXoa);
+        buttonPanel.add(btnLuu);
+        buttonPanel.add(btnHuy);
+        buttonPanel.add(btnLamMoi);
+        buttonPanel.add(btnThoat);
+        buttonPanel.add(btnThemHV);
+        buttonPanel.add(btnXoaHV);
+        
+        return buttonPanel;
+    }
+
+    private JSplitPane createTablePanels() {
+        // Main table
+        String[] columns = {"Mã lớp học", "Mã môn học", "Tên môn học", 
+                          "Mã giáo viên", "Tên giáo viên", 
+                          "Ngày bắt đầu", "Ngày kết thúc", "Số buổi"};
+        tableModel = new DefaultTableModel(columns, 0);
+        gridview = new JTable(tableModel);
+        JScrollPane scrollPane1 = new JScrollPane(gridview);
+
+        // Detail table
+        String[] detailColumns = {"Mã học viên", "Tên học viên", "Điện thoại", "Địa chỉ"};
+        detailTableModel = new DefaultTableModel(detailColumns, 0);
+        gridviewDetail = new JTable(detailTableModel);
+        JScrollPane scrollPane2 = new JScrollPane(gridviewDetail);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
+                                            scrollPane1, scrollPane2);
+        splitPane.setDividerLocation(300);
+        
+        return splitPane;
+    }
+
+    private JPanel createSearchPanel() {
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        txtTenTKSearch = new JTextField(20);
+        btnTim = new JButton("Tìm kiếm");
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtTenTKSearch);
+        searchPanel.add(btnTim);
+        return searchPanel;
+    }
+
+    // ... (tiếp theo)

@@ -1,0 +1,152 @@
+package gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.ResultSet;
+import java.util.Date;
+import com.toedter.calendar.JDateChooser;
+import dbconect.*;
+
+public class QuanLyLopHocForm extends JFrame {
+    private JPanel mainPanel, formPanel, buttonPanel, searchPanel;
+    private JSplitPane splitPane;
+    private JTable gridview, gridviewDetail;
+    private DefaultTableModel tableModel, detailTableModel;
+    
+    private JTextField txtMaLH;
+    private JTextField txtTenTKSearch;
+    private JComboBox<String> cboMaMH;
+    private JComboBox<String> cboMaGV;
+    private JComboBox<String> cboMaHV;
+    private JDateChooser dtNgayBatDau;
+    private JDateChooser dtNgayKetThuc;
+    private JSpinner nmSoBuoi;
+    
+    private JButton btnThem, btnSua, btnXoa, btnLuu, btnHuy;
+    private JButton btnLamMoi, btnThoat, btnTim;
+    private JButton btnThemHV, btnXoaHV;
+    
+    private DAL_LopHoc dal;
+    private DAL_MonHoc dal_mh;
+    private DAL_GiaoVien dal_gv;
+    private DAL_HocVien dal_hv;
+    private boolean luu;
+
+    public QuanLyLopHocForm() {
+        initializeComponents();
+        setupLayout();
+        addEventListeners();
+        loadInitialData();
+    }
+
+    private void initializeComponents() {
+        // Initialize main components
+        mainPanel = new JPanel(new BorderLayout(5, 5));
+        formPanel = new JPanel(new GridBagLayout());
+        buttonPanel = new JPanel(new FlowLayout());
+        searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        // Initialize form fields
+        txtMaLH = new JTextField(15);
+        txtTenTKSearch = new JTextField(20);
+        cboMaMH = new JComboBox<>();
+        cboMaGV = new JComboBox<>();
+        cboMaHV = new JComboBox<>();
+        dtNgayBatDau = new JDateChooser();
+        dtNgayKetThuc = new JDateChooser();
+        nmSoBuoi = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+
+        // Initialize buttons
+        btnThem = new JButton("Thêm");
+        btnSua = new JButton("Sửa");
+        btnXoa = new JButton("Xóa");
+        btnLuu = new JButton("Lưu");
+        btnHuy = new JButton("Hủy");
+        btnLamMoi = new JButton("Làm mới");
+        btnThoat = new JButton("Thoát");
+        btnTim = new JButton("Tìm kiếm");
+        btnThemHV = new JButton("Thêm học viên");
+        btnXoaHV = new JButton("Xóa học viên");
+
+        // Initialize tables
+        String[] columns = {"Mã lớp học", "Mã môn học", "Tên môn học", 
+                          "Mã giáo viên", "Tên giáo viên", 
+                          "Ngày bắt đầu", "Ngày kết thúc", "Số buổi"};
+        tableModel = new DefaultTableModel(columns, 0);
+        gridview = new JTable(tableModel);
+
+        String[] detailColumns = {"Mã học viên", "Tên học viên", "Điện thoại", "Địa chỉ"};
+        detailTableModel = new DefaultTableModel(detailColumns, 0);
+        gridviewDetail = new JTable(detailTableModel);
+
+        // Initialize DAL objects
+        dal = new DAL_LopHoc();
+        dal_mh = new DAL_MonHoc();
+        dal_gv = new DAL_GiaoVien();
+        dal_hv = new DAL_HocVien();
+
+        // Set frame properties
+        setTitle("Quản lý lớp học");
+        setSize(1000, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+    private void setupLayout() {
+        // Setup form panel
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Add components to form panel
+        addFormComponent(formPanel, "Mã lớp học:", txtMaLH, gbc, 0, 0);
+        addFormComponent(formPanel, "Môn học:", cboMaMH, gbc, 0, 1);
+        addFormComponent(formPanel, "Giáo viên:", cboMaGV, gbc, 2, 0);
+        addFormComponent(formPanel, "Ngày bắt đầu:", dtNgayBatDau, gbc, 2, 1);
+        addFormComponent(formPanel, "Ngày kết thúc:", dtNgayKetThuc, gbc, 0, 2);
+        addFormComponent(formPanel, "Số buổi:", nmSoBuoi, gbc, 2, 2);
+        addFormComponent(formPanel, "Học viên:", cboMaHV, gbc, 0, 3);
+
+        // Setup button panel
+        buttonPanel.add(btnThem);
+        buttonPanel.add(btnSua);
+        buttonPanel.add(btnXoa);
+        buttonPanel.add(btnLuu);
+        buttonPanel.add(btnHuy);
+        buttonPanel.add(btnLamMoi);
+        buttonPanel.add(btnThoat);
+        buttonPanel.add(btnThemHV);
+        buttonPanel.add(btnXoaHV);
+
+        // Setup search panel
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtTenTKSearch);
+        searchPanel.add(btnTim);
+
+        // Setup split pane
+        JScrollPane scrollPane1 = new JScrollPane(gridview);
+        JScrollPane scrollPane2 = new JScrollPane(gridviewDetail);
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane1, scrollPane2);
+        splitPane.setDividerLocation(300);
+
+        // Add all components to main panel
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        mainPanel.add(splitPane, BorderLayout.SOUTH);
+        mainPanel.add(searchPanel, BorderLayout.PAGE_END);
+
+        setContentPane(mainPanel);
+    }
+
+    private void addFormComponent(JPanel panel, String label, JComponent component, 
+                                GridBagConstraints gbc, int x, int y) {
+        gbc.gridx = x;
+        gbc.gridy = y;
+        panel.add(new JLabel(label), gbc);
+        gbc.gridx = x + 1;
+        panel.add(component, gbc);
+    }
+
+    // ... (phần còn lại của code giữ nguyên)

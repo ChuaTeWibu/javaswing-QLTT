@@ -1,0 +1,37 @@
+package dbconect;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class LoginExample {
+    public static void main(String[] args) {
+        DAL_TaiKhoan dalTaiKhoan = new DAL_TaiKhoan();
+        StringBuilder quyen = new StringBuilder();
+        
+        // Thử đăng nhập
+        try {
+            ResultSet rs = dalTaiKhoan.kiemTraDangNhap("username", "password", quyen);
+            
+            if (rs != null) {
+                if (quyen.length() > 0) {
+                    System.out.println("Đăng nhập thành công!");
+                    System.out.println("Quyền: " + quyen.toString());
+                    
+                    // Đọc thông tin tài khoảsn
+                    while (rs.next()) {
+                        System.out.println("Mã TK: " + rs.getString("MaTK"));
+                        // Đọc thêm các thông tin khác nếu cần
+                    }
+                } else {
+                    System.out.println("Sai tên đăng nhập hoặc mật khẩu!");
+                }
+            } else {
+                System.out.println("Lỗi kết nối database!");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Lỗi: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

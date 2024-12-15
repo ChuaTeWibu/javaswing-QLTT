@@ -1,0 +1,60 @@
+package dbconect;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class DAL_Dsdk {
+
+    // Phương thức để kết nối và lấy danh sách đăng ký
+    public List<Map<String, Object>> DanhSachDangKy(String TenHV, String MaHV) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        // Câu truy vấn SQL
+        String sql = "SELECT c.MaHV, d.TenHV, b.MaMH, a.TenMH " +
+                     "FROM MonHoc a " +
+                     "LEFT JOIN LopHoc b ON a.MaMH = b.MaMH " +
+                     "LEFT JOIN LopHoc_HocVien c ON b.MaLH = c.MaLH " +
+                     "LEFT JOIN HocVien d ON c.MaHV = d.MaHV " +
+                     "WHERE d.TenHV LIKE ? AND c.MaHV LIKE ?";
+
+        // Kết nối với cơ sở dữ liệu MySQL
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/quanlytrungtam", "root", "password"); // Cập nhật thông tin kết nối
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            // Thiết lập tham số cho câu truy vấn
+            statement.setString(1, "%" + TenHV + "%");
+            statement.setString(2, "%" + MaHV + "%");
+
+            // Thực thi câu truy vấn và nhận kết quả
+            ResultSet rs = statement.executeQuery();
+
+            // Xử lý kết quả
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("MaHV", rs.getString("MaHV"));
+                row.put("TenHV", rs.getString("TenHV"));
+                row.put("MaMH", rs.getString("MaMH"));
+                row.put("TenMH", rs.getString("TenMH"));
+                result.add(row);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    // Phương thức main để test (tuỳ chọn)
+    public static void main(String[] args) {
+        DAL_Dsdk dal = new DAL_Dsdk();
+        List<Map<String, Object>> list = dal.DanhSachDangKy("John", "HV01");
+
+        // In ra kết quả
+        for (Map<String, Object> row : list) {
+            System.out.println(row);
+        }
+    }
+}

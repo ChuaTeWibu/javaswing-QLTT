@@ -1,0 +1,42 @@
+package dbconect;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+
+public class DatabaseConnection {
+    // Thông tin kết nối cơ sở dữ liệu
+    private static final String URL = "jdbc:mysql://localhost:3306/your_database";  // Thay your_database bằng tên cơ sở dữ liệu của bạn
+    private static final String USER = "root"; // Thay bằng username của bạn
+    private static final String PASSWORD = "your_password"; // Thay bằng password của bạn
+
+    public static void main(String[] args) {
+        // Kết nối đến cơ sở dữ liệu MySQL
+        try {
+            // Tải Driver JDBC của MySQL
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Tạo kết nối
+            Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("Kết nối MySQL thành công!");
+
+            // Kiểm tra kết nối bằng cách thực thi một câu lệnh SQL đơn giản
+            Statement stmt = connection.createStatement();
+            String query = "SELECT 1";  // Truy vấn đơn giản để kiểm tra kết nối
+            ResultSet rs = stmt.executeQuery(query);
+
+            // Kiểm tra nếu có kết quả trả về
+            if (rs.next()) {
+                System.out.println("Câu lệnh SQL thực thi thành công, kết nối hoạt động!");
+            }
+
+            // Đóng kết nối
+            connection.close();
+        } catch (ClassNotFoundException e) {
+            System.err.println("Không tìm thấy driver JDBC: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Lỗi kết nối cơ sở dữ liệu: " + e.getMessage());
+        }
+    }
+}

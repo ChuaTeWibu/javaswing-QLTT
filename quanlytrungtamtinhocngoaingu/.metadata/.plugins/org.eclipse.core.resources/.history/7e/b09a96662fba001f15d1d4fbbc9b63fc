@@ -1,0 +1,138 @@
+package gui;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import dbconect.DAL_TaiKhoan;
+import java.sql.ResultSet;
+
+public class LoginForm extends JFrame {
+    
+    // Khai báo components
+    private JTextField txtMaTK;
+    private JPasswordField txtMatKhau;
+    private JButton btnConnect;
+    private JButton btnExit;
+    private static String MaTK;
+
+    public LoginForm() {
+        // Thiết lập cơ bản cho form
+        setTitle("Đăng nhập hệ thống");
+        setSize(400, 200);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        // Tạo panel chính với GridBagLayout
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Thêm các components
+        // 1. Label và TextField cho Mã TK
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(new JLabel("Mã tài khoản:"), gbc);
+
+        gbc.gridx = 1;
+        txtMaTK = new JTextField(20);
+        mainPanel.add(txtMaTK, gbc);
+
+        // 2. Label và PasswordField cho Mật khẩu
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        mainPanel.add(new JLabel("Mật khẩu:"), gbc);
+
+        gbc.gridx = 1;
+        txtMatKhau = new JPasswordField(20);
+        mainPanel.add(txtMatKhau, gbc);
+
+        // 3. Panel cho các buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnConnect = new JButton("Đăng nhập");
+        btnExit = new JButton("Thoát");
+        buttonPanel.add(btnConnect);
+        buttonPanel.add(btnExit);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        mainPanel.add(buttonPanel, gbc);
+
+        // Thêm panel chính vào frame
+        add(mainPanel);
+
+        // Xử lý sự kiện cho nút Đăng nhập
+        btnConnect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                btnConnect_Click();
+            }
+        });
+
+        // Xử lý sự kiện cho nút Thoát
+        btnExit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+    }
+
+    private void btnConnect_Click() {
+        DAL_TaiKhoan db = new DAL_TaiKhoan();
+        String quyen = "";
+        
+        try {
+            ResultSet dt = db.kiemTraDangNhap(
+                txtMaTK.getText().trim(), 
+                new String(txtMatKhau.getPassword()).trim()
+            );
+
+            if (dt != null && dt.next()) {
+                this.setVisible(false);
+                MaTK = txtMaTK.getText().trim();
+                quyen = dt.getString("Quyen");
+                
+                MainForm frm = new MainForm();
+                frm.setQuyen(quyen);
+                frm.setVisible(true);
+                
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "Sai tên đăng nhập hoặc mật khẩu",
+                    "Thông báo",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi: " + ex.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static String getMaTK() {
+        return MaTK;
+    }
+
+    // Main để test form
+    public static void main(String[] args) {
+        // Set Look and Feel
+        try {
+            UIManager.setLookAndFeel(
+                UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Hiển thị form
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                new LoginForm().setVisible(true);
+            }
+        });
+    }
+}

@@ -1,0 +1,74 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_TaiKhoan {
+    
+    // Phương thức kiểm tra đăng nhập
+    // Tham số: maTK - tên đăng nhập, matKhau - mật khẩu, quyen - để lưu quyền của tài khoản
+    // Trả về: ResultSet chứa thông tin tài khoản nếu đăng nhập thành công
+    public ResultSet kiemTraDangNhap(String maTK, String matKhau, StringBuilder quyen) {
+        // Câu truy vấn SQL với tham số ? để tránh SQL injection
+        String query = "SELECT * FROM TaiKhoan WHERE MaTK = ? AND MatKhau = ?";
+        
+        try {
+            // Gọi phương thức getData từ DataProvider để thực hiện truy vấn
+            // Truyền vào câu query và các tham số maTK, matKhau
+            ResultSet result = DataProvider.getData(query, maTK, matKhau);
+            
+            // Kiểm tra kết quả trả về
+            if (result != null && result.next()) {
+                // Nếu tìm thấy tài khoản, lưu quyền vào StringBuilder
+                quyen.append(result.getString("Quyen"));
+                // Di chuyển con trỏ về đầu ResultSet để đọc lại từ đầu
+                result.beforeFirst();
+            } else {
+                // Nếu không tìm thấy, xóa nội dung của StringBuilder
+                quyen.setLength(0);
+            }
+            
+            return result;
+            
+        } catch (SQLException e) {
+            // Xử lý ngoại lệ SQL
+            e.printStackTrace();
+            // Xóa nội dung của StringBuilder trong trường hợp lỗi
+            quyen.setLength(0);
+            return null;
+        }
+    }
+
+    // Phương thức main để test chức năng
+    public static void main(String[] args) {
+        // Tạo đối tượng DAL_TaiKhoan để test
+        DAL_TaiKhoan dalTaiKhoan = new DAL_TaiKhoan();
+        // Tạo StringBuilder để nhận quyền của tài khoản
+        StringBuilder quyen = new StringBuilder();
+        
+        try {
+            // Thử đăng nhập với tài khoản test
+            ResultSet rs = dalTaiKhoan.kiemTraDangNhap("ADMIN", "1234", quyen);
+            
+            // Kiểm tra kết quả trả về
+            if (rs != null) { // Nếu kết nối database thành công
+                if (quyen.length() > 0) { // Nếu tìm thấy tài khoản (có quyền)
+                    // Duyệt qua kết quả và in thông tin
+                    while (rs.next()) {
+                        System.out.println("MaTK: " + rs.getString("MaTK"));
+                        System.out.println("MatKhau: " + rs.getString("MatKhau"));
+                        System.out.println("Quyen: " + quyen.toString());
+                    }
+                } else {
+                    // Không tìm thấy tài khoản hoặc sai mật khẩu
+                    System.out.println("Tài khoản hoặc mật khẩu không đúng!");
+                }
+            } else {
+                // Lỗi kết nối database
+                System.out.println("Lỗi kết nối database!");
+            }
+        } catch (SQLException e) {
+            // Xử lý các ngoại lệ SQL khác
+            e.printStackTrace();
+        }
+    }
+}

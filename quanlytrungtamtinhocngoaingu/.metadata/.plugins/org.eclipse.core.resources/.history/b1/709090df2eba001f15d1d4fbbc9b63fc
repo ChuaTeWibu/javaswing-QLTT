@@ -1,0 +1,146 @@
+package gui;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class MainForm extends JFrame {
+    private String quyen;
+    private JMenuBar menuBar;
+    private JMenu menuQuanLy, menuTaiKhoan;
+    private JMenuItem menuItemHocVien, menuItemGiaoVien, menuItemMonHoc;
+    private JMenuItem menuItemLopHoc, menuItemLichThi, menuItemKetQua;
+    private JMenuItem menuItemDSDK, menuItemDangXuat;
+
+    public MainForm() {
+        initComponents();
+    }
+
+    private void initComponents() {
+        // Thiết lập form
+        setTitle("Quản lý trung tâm");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Tạo MenuBar
+        menuBar = new JMenuBar();
+
+        // Menu Quản lý
+        menuQuanLy = new JMenu("Quản lý");
+        menuItemHocVien = new JMenuItem("Quản lý học viên");
+        menuItemGiaoVien = new JMenuItem("Quản lý giáo viên");
+        menuItemMonHoc = new JMenuItem("Quản lý môn học");
+        menuItemLopHoc = new JMenuItem("Quản lý lớp học");
+        menuItemLichThi = new JMenuItem("Quản lý lịch thi");
+        menuItemKetQua = new JMenuItem("Quản lý kết quả thi");
+        menuItemDSDK = new JMenuItem("Danh sách đăng ký");
+
+        // Menu Tài khoản
+        menuTaiKhoan = new JMenu("Tài khoản");
+        menuItemDangXuat = new JMenuItem("Đăng xuất");
+
+        // Thêm các MenuItem vào Menu
+        menuQuanLy.add(menuItemHocVien);
+        menuQuanLy.add(menuItemGiaoVien);
+        menuQuanLy.add(menuItemMonHoc);
+        menuQuanLy.add(menuItemLopHoc);
+        menuQuanLy.add(menuItemLichThi);
+        menuQuanLy.add(menuItemKetQua);
+        menuQuanLy.add(menuItemDSDK);
+        
+        menuTaiKhoan.add(menuItemDangXuat);
+
+        // Thêm Menu vào MenuBar
+        menuBar.add(menuQuanLy);
+        menuBar.add(menuTaiKhoan);
+
+        // Set MenuBar cho Frame
+        setJMenuBar(menuBar);
+
+        // Thêm các ActionListener
+        menuItemDangXuat.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dangXuat();
+            }
+        });
+
+        menuItemHocVien.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (quyen.equals("Admin")) {
+                    showWarning();
+                } else {
+                    new QuanLyHocVienForm().setVisible(true);
+                }
+            }
+        });
+
+        menuItemGiaoVien.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (quyen.equals("Admin")) {
+                    new QuanLyGiaoVienForm().setVisible(true);
+                } else {
+                    showWarning();
+                }
+            }
+        });
+
+        // Tương tự cho các menu item khác...
+    }
+
+    private void dangXuat() {
+        int result = JOptionPane.showConfirmDialog(this,
+            "Bạn có muốn thoát chương trình?",
+            "Xác nhận",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE);
+            
+        if (result == JOptionPane.YES_OPTION) {
+            dispose();
+            new LoginForm().setVisible(true);
+        }
+    }
+
+    private void showWarning() {
+        JOptionPane.showMessageDialog(this,
+            "Bạn không có quyền truy cập chức năng này.",
+            "Thông báo",
+            JOptionPane.WARNING_MESSAGE);
+    }
+
+    public void setQuyen(String quyen) {
+        this.quyen = quyen;
+        updateMenuPermissions();
+    }
+
+    private void updateMenuPermissions() {
+        // Cập nhật quyền truy cập menu dựa trên role
+        boolean isAdmin = quyen.equals("Admin");
+        menuItemHocVien.setEnabled(!isAdmin);
+        menuItemGiaoVien.setEnabled(isAdmin);
+        menuItemMonHoc.setEnabled(isAdmin);
+        menuItemLopHoc.setEnabled(isAdmin);
+        menuItemLichThi.setEnabled(!isAdmin);
+        menuItemKetQua.setEnabled(!isAdmin);
+        menuItemDSDK.setEnabled(!isAdmin);
+    }
+
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                MainForm mainForm = new MainForm();
+                mainForm.setQuyen("Admin"); // Test với quyền Admin
+                mainForm.setVisible(true);
+            }
+        });
+    }
+}

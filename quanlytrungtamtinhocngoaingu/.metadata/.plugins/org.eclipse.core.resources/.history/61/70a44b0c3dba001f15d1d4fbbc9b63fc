@@ -1,0 +1,448 @@
+package gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.ResultSet;
+import java.util.Date;
+import com.toedter.calendar.JDateChooser;
+import dbconect.*;
+
+public class QuanLyLopHocForm extends JFrame {
+    private JPanel mainPanel, formPanel, buttonPanel, searchPanel;
+    private JSplitPane splitPane;
+    private JTable gridview, gridviewDetail;
+    private DefaultTableModel tableModel, detailTableModel;
+    
+    private JTextField txtMaLH;
+    private JTextField txtTenTKSearch;
+    private JComboBox<String> cboMaMH;
+    private JComboBox<String> cboMaGV;
+    private JComboBox<String> cboMaHV;
+    private JDateChooser dtNgayBatDau;
+    private JDateChooser dtNgayKetThuc;
+    private JSpinner nmSoBuoi;
+    
+    private JButton btnThem, btnSua, btnXoa, btnLuu, btnHuy;
+    private JButton btnLamMoi, btnThoat, btnTim;
+    private JButton btnThemHV, btnXoaHV;
+    
+    private DAL_LopHoc dal;
+    private DAL_MonHoc dal_mh;
+    private DAL_GiaoVien dal_gv;
+    private DAL_HocVien dal_hv;
+    private boolean luu;
+
+    public QuanLyLopHocForm() {
+        initializeComponents();
+        setupLayout();
+        addEventListeners();
+        loadInitialData();
+    }
+
+    private void initializeComponents() {
+        // Initialize main components
+        mainPanel = new JPanel(new BorderLayout(5, 5));
+        formPanel = new JPanel(new GridBagLayout());
+        buttonPanel = new JPanel(new FlowLayout());
+        searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        // Initialize form fields
+        txtMaLH = new JTextField(15);
+        txtTenTKSearch = new JTextField(20);
+        cboMaMH = new JComboBox<>();
+        cboMaGV = new JComboBox<>();
+        cboMaHV = new JComboBox<>();
+        dtNgayBatDau = new JDateChooser();
+        dtNgayKetThuc = new JDateChooser();
+        nmSoBuoi = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+
+        // Initialize buttons
+        btnThem = new JButton("Thêm");
+        btnSua = new JButton("Sửa");
+        btnXoa = new JButton("Xóa");
+        btnLuu = new JButton("Lưu");
+        btnHuy = new JButton("Hủy");
+        btnLamMoi = new JButton("Làm mới");
+        btnThoat = new JButton("Thoát");
+        btnTim = new JButton("Tìm kiếm");
+        btnThemHV = new JButton("Thêm học viên");
+        btnXoaHV = new JButton("Xóa học viên");
+
+        // Initialize tables
+        String[] columns = {"Mã lớp học", "Mã môn học", "Tên môn học", 
+                          "Mã giáo viên", "Tên giáo viên", 
+                          "Ngày bắt đầu", "Ngày kết thúc", "Số buổi"};
+        tableModel = new DefaultTableModel(columns, 0);
+        gridview = new JTable(tableModel);
+
+        String[] detailColumns = {"Mã học viên", "Tên học viên", "Điện thoại", "Địa chỉ"};
+        detailTableModel = new DefaultTableModel(detailColumns, 0);
+        gridviewDetail = new JTable(detailTableModel);
+
+        // Initialize DAL objects
+        dal = new DAL_LopHoc();
+        dal_mh = new DAL_MonHoc();
+        dal_gv = new DAL_GiaoVien();
+        dal_hv = new DAL_HocVien();
+
+        // Set frame properties
+        setTitle("Quản lý lớp học");
+        setSize(1000, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    }
+
+    private void setupLayout() {
+        // Setup form panel
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Add components to form panel
+        addFormComponent(formPanel, "Mã lớp học:", txtMaLH, gbc, 0, 0);
+        addFormComponent(formPanel, "Môn học:", cboMaMH, gbc, 0, 1);
+        addFormComponent(formPanel, "Giáo viên:", cboMaGV, gbc, 2, 0);
+        addFormComponent(formPanel, "Ngày bắt đầu:", dtNgayBatDau, gbc, 2, 1);
+        addFormComponent(formPanel, "Ngày kết thúc:", dtNgayKetThuc, gbc, 0, 2);
+        addFormComponent(formPanel, "Số buổi:", nmSoBuoi, gbc, 2, 2);
+        addFormComponent(formPanel, "Học viên:", cboMaHV, gbc, 0, 3);
+
+        // Setup button panel
+        buttonPanel.add(btnThem);
+        buttonPanel.add(btnSua);
+        buttonPanel.add(btnXoa);
+        buttonPanel.add(btnLuu);
+        buttonPanel.add(btnHuy);
+        buttonPanel.add(btnLamMoi);
+        buttonPanel.add(btnThoat);
+        buttonPanel.add(btnThemHV);
+        buttonPanel.add(btnXoaHV);
+
+        // Setup search panel
+        searchPanel.add(new JLabel("Tìm kiếm:"));
+        searchPanel.add(txtTenTKSearch);
+        searchPanel.add(btnTim);
+
+        // Setup split pane
+        JScrollPane scrollPane1 = new JScrollPane(gridview);
+        JScrollPane scrollPane2 = new JScrollPane(gridviewDetail);
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane1, scrollPane2);
+        splitPane.setDividerLocation(300);
+
+        // Add all components to main panel
+        mainPanel.add(formPanel, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        mainPanel.add(splitPane, BorderLayout.SOUTH);
+        mainPanel.add(searchPanel, BorderLayout.PAGE_END);
+
+        setContentPane(mainPanel);
+    }
+
+    private void addFormComponent(JPanel panel, String label, JComponent component, 
+                                GridBagConstraints gbc, int x, int y) {
+        gbc.gridx = x;
+        gbc.gridy = y;
+        panel.add(new JLabel(label), gbc);
+        gbc.gridx = x + 1;
+        panel.add(component, gbc);
+    }
+
+    private void addEventListeners() {
+        btnThem.addActionListener(e -> btnThem_Click());
+        btnSua.addActionListener(e -> btnSua_Click());
+        btnXoa.addActionListener(e -> btnXoa_Click());
+        btnLuu.addActionListener(e -> btnLuu_Click());
+        btnHuy.addActionListener(e -> btnHuy_Click());
+        btnLamMoi.addActionListener(e -> btnLamMoi_Click());
+        btnThoat.addActionListener(e -> dispose());
+        btnTim.addActionListener(e -> loadData(txtTenTKSearch.getText()));
+        btnThemHV.addActionListener(e -> btnThemHV_Click());
+        btnXoaHV.addActionListener(e -> btnXoaHV_Click());
+
+        gridview.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = gridview.getSelectedRow();
+                if (row >= 0) {
+                    loadRowData(row);
+                }
+            }
+        });
+    }
+
+    private void loadInitialData() {
+        loadComboBoxData();
+        loadData("");
+        setControlState(true);
+    }
+
+    private void loadComboBoxData() {
+        try {
+            // Clear existing items
+            cboMaMH.removeAllItems();
+            cboMaGV.removeAllItems();
+            cboMaHV.removeAllItems();
+
+            // Load Môn học
+            ResultSet rsMH = dal_mh.danhSachMonHoc("");
+            while (rsMH.next()) {
+                String maMH = rsMH.getString("MaMH");
+                String tenMH = rsMH.getString("TenMH");
+                cboMaMH.addItem(tenMH);
+                cboMaMH.putClientProperty(tenMH, maMH);
+            }
+
+            // Load Giáo viên
+            ResultSet rsGV = dal_gv.danhSachGiaoVien("");
+            while (rsGV.next()) {
+                String maGV = rsGV.getString("MaGV");
+                String tenGV = rsGV.getString("TenGV");
+                cboMaGV.addItem(tenGV);
+                cboMaGV.putClientProperty(tenGV, maGV);
+            }
+
+            // Load Học viên
+            ResultSet rsHV = dal_hv.danhSachHocVien("");
+            while (rsHV.next()) {
+                String maHV = rsHV.getString("MaHV");
+                String tenHV = rsHV.getString("TenHV");
+                cboMaHV.addItem(tenHV);
+                cboMaHV.putClientProperty(tenHV, maHV);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, 
+                "Lỗi tải dữ liệu: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void loadData(String maLH) {
+        tableModel.setRowCount(0);
+        try {
+            ResultSet rs = dal.danhSachLopHoc(maLH);
+            while (rs.next()) {
+                tableModel.addRow(new Object[]{
+                    rs.getString("MaLH"),
+                    rs.getString("MaMH"),
+                    rs.getString("TenMH"),
+                    rs.getString("MaGV"),
+                    rs.getString("TenGV"),
+                    rs.getDate("NgayBatDau"),
+                    rs.getDate("NgayKetThuc"),
+                    rs.getInt("SoBuoi")
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Lỗi tải dữ liệu: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void loadHocVienTheoLop(String maLH) {
+        detailTableModel.setRowCount(0);
+        try {
+            ResultSet rs = dal.danhSachHocVienTheoLop(maLH);
+            while (rs.next()) {
+                detailTableModel.addRow(new Object[]{
+                    rs.getString("MaHV"),
+                    rs.getString("TenHV"),
+                    rs.getString("DienThoai"),
+                    rs.getString("DiaChi")
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Lỗi tải danh sách học viên: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void loadRowData(int row) {
+        txtMaLH.setText(gridview.getValueAt(row, 0).toString());
+        
+        String tenMH = gridview.getValueAt(row, 2).toString();
+        cboMaMH.setSelectedItem(tenMH);
+        
+        String tenGV = gridview.getValueAt(row, 4).toString();
+        cboMaGV.setSelectedItem(tenGV);
+        
+        try {
+            java.util.Date ngayBD = (java.util.Date)gridview.getValueAt(row, 5);
+            java.util.Date ngayKT = (java.util.Date)gridview.getValueAt(row, 6);
+            
+            dtNgayBatDau.setDate(ngayBD);
+            dtNgayKetThuc.setDate(ngayKT);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        nmSoBuoi.setValue(gridview.getValueAt(row, 7));
+        
+        loadHocVienTheoLop(gridview.getValueAt(row, 0).toString());
+    }
+
+    private void setControlState(boolean state) {
+        btnThem.setEnabled(state);
+        btnSua.setEnabled(state);
+        btnXoa.setEnabled(state);
+        btnLuu.setEnabled(!state);
+        btnHuy.setEnabled(!state);
+        btnLamMoi.setEnabled(state);
+        btnThoat.setEnabled(state);
+        btnTim.setEnabled(state);
+        btnThemHV.setEnabled(state);
+        btnXoaHV.setEnabled(state);
+        
+        txtMaLH.setEnabled(!state);
+        cboMaMH.setEnabled(!state);
+        cboMaGV.setEnabled(!state);
+        dtNgayBatDau.setEnabled(!state);
+        dtNgayKetThuc.setEnabled(!state);
+        nmSoBuoi.setEnabled(!state);
+    }
+
+    private void clearFields() {
+        txtMaLH.setText("");
+        cboMaMH.setSelectedIndex(0);
+        cboMaGV.setSelectedIndex(0);
+        dtNgayBatDau.setDate(new Date());
+        dtNgayKetThuc.setDate(new Date());
+        nmSoBuoi.setValue(1);
+    }
+
+    // Thêm các phương thức xử lý sự kiện button
+    private void btnThem_Click() {
+        clearFields();
+        setControlState(false);
+        luu = true;
+        txtMaLH.requestFocus();
+    }
+
+    private void btnSua_Click() {
+        if (gridview.getSelectedRow() < 0) return;
+        luu = false;
+        setControlState(false);
+        txtMaLH.setEnabled(false);
+    }
+
+    private void btnXoa_Click() {
+        if (gridview.getSelectedRow() < 0) return;
+        
+        int result = JOptionPane.showConfirmDialog(this,
+            "Có chắc chắn xóa lớp học này không?",
+            "Xác nhận",
+            JOptionPane.YES_NO_OPTION);
+            
+        if (result == JOptionPane.YES_OPTION) {
+            try {
+                String maLH = gridview.getValueAt(gridview.getSelectedRow(), 0).toString();
+                dal.xoaLopHoc(maLH);
+                JOptionPane.showMessageDialog(this, "Xóa thành công");
+                loadData("");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Lỗi xóa lớp học: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void btnLuu_Click() {
+        if (!validateInput()) return;
+        
+        try {
+            String maLH = txtMaLH.getText().trim();
+            String maMH = (String)cboMaMH.getClientProperty(cboMaMH.getSelectedItem());
+            String maGV = (String)cboMaGV.getClientProperty(cboMaGV.getSelectedItem());
+            String ngayBD = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dtNgayBatDau.getDate());
+            String ngayKT = new java.text.SimpleDateFormat("yyyy-MM-dd").format(dtNgayKetThuc.getDate());
+            int soBuoi = (Integer)nmSoBuoi.getValue();
+            
+            if (luu) {
+                dal.themLopHoc(maLH, maMH, maGV, ngayBD, ngayKT, soBuoi);
+                JOptionPane.showMessageDialog(this, "Thêm thành công");
+            } else {
+                dal.suaLopHoc(maLH, maMH, maGV, ngayBD, ngayKT, soBuoi);
+                JOptionPane.showMessageDialog(this, "Sửa thành công");
+            }
+            loadData("");
+            setControlState(true);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Lỗi: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean validateInput() {
+        if (txtMaLH.getText().trim().isEmpty()) {
+            showError("Mã lớp học không được trống", txtMaLH);
+            return false;
+        }
+        if (cboMaMH.getSelectedIndex() == -1) {
+            showError("Chưa chọn môn học", cboMaMH);
+            return false;
+        }
+        if (cboMaGV.getSelectedIndex() == -1) {
+            showError("Chưa chọn giáo viên", cboMaGV);
+            return false;
+        }
+        if (dtNgayBatDau.getDate() == null) {
+            showError("Ngày bắt đầu không được trống", dtNgayBatDau);
+            return false;
+        }
+        if (dtNgayKetThuc.getDate() == null) {
+            showError("Ngày kết thúc không được trống", dtNgayKetThuc);
+            return false;
+        }
+        return true;
+    }
+
+    private void showError(String message, Component focusComponent) {
+        JOptionPane.showMessageDialog(this,
+            message,
+            "Lỗi",
+            JOptionPane.ERROR_MESSAGE);
+        focusComponent.requestFocus();
+    }
+
+    private void btnHuy_Click() {
+        loadData("");
+        setControlState(true);
+        if (gridview.getRowCount() > 0) {
+            gridview.setRowSelectionInterval(0, 0);
+            loadRowData(0);
+        }
+    }
+
+    private void btnLamMoi_Click() {
+        txtTenTKSearch.setText("");
+        loadData("");
+        setControlState(true);
+        if (gridview.getRowCount() > 0) {
+            gridview.setRowSelectionInterval(0, 0);
+            loadRowData(0);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            new QuanLyLopHocForm().setVisible(true);
+        });
+    }
+}

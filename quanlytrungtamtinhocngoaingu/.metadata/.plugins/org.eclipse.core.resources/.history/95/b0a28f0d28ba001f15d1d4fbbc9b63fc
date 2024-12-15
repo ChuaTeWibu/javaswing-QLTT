@@ -1,0 +1,76 @@
+package dbconect;
+
+import java.sql.*;
+
+/**
+ * Lớp xử lý danh sách đăng ký môn học
+ * Quản lý thông tin đăng ký học của học viên
+ */
+public class DAL_Dsdk {
+    
+    /**
+     * Lấy danh sách đăng ký môn học của học viên
+     * @param tenHV Tên học viên cần tìm
+     * @param maHV Mã học viên cần tìm
+     * @return ResultSet chứa thông tin đăng ký môn học
+     */
+    public ResultSet danhSachDangKy(String tenHV, String maHV) {
+        String query = "SELECT c.MaHV, d.TenHV, b.MaMH, a.TenMH " +
+                      "FROM MonHoc a " +
+                      "LEFT JOIN LopHoc b ON a.MaMH = b.MaMH " +
+                      "LEFT JOIN LopHoc_HocVien c ON b.MaLH = c.MaLH " +
+                      "LEFT JOIN HocVien d ON c.MaHV = d.MaHV " +
+                      "WHERE d.TenHV LIKE ? AND c.MaHV LIKE ?";
+        try {
+            return DataProvider.getData(query, "%" + tenHV + "%", "%" + maHV + "%");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Phương thức test chức năng
+     */
+    public static void main(String[] args) {
+        DAL_Dsdk dal = new DAL_Dsdk();
+        
+        // Test tìm kiếm danh sách đăng ký
+        System.out.println("=== Test tìm kiếm danh sách đăng ký ===");
+        try {
+            // Có thể để trống để lấy tất cả
+            String tenHV = "";
+            String maHV = "";
+            
+            System.out.println("Tìm kiếm với:");
+            System.out.println("Tên học viên: '" + tenHV + "'");
+            System.out.println("Mã học viên: '" + maHV + "'");
+            
+            ResultSet rs = dal.danhSachDangKy(tenHV, maHV);
+            
+            if (rs != null) {
+                boolean coKetQua = false;
+                
+                while (rs.next()) {
+                    coKetQua = true;
+                    System.out.println("\nThông tin đăng ký:");
+                    System.out.println("Mã học viên: " + rs.getString("MaHV"));
+                    System.out.println("Tên học viên: " + rs.getString("TenHV"));
+                    System.out.println("Mã môn học: " + rs.getString("MaMH"));
+                    System.out.println("Tên môn học: " + rs.getString("TenMH"));
+                    System.out.println("---------------");
+                }
+                
+                if (!coKetQua) {
+                    System.out.println("Không tìm thấy thông tin đăng ký nào!");
+                }
+            } else {
+                System.out.println("Lỗi khi truy vấn dữ liệu!");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Lỗi SQL: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

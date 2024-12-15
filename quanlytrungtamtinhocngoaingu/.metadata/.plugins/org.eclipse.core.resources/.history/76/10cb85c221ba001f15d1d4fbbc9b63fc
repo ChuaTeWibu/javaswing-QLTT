@@ -1,0 +1,93 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_GiaoVien {
+    
+    /**
+     * Lấy danh sách giáo viên theo tên
+     */
+    public ResultSet danhSachGiaoVien(String tenGV) {
+        String query = "SELECT * FROM GiaoVien WHERE TenGV LIKE ?";
+        try {
+            ResultSet rs = DataProvider.getData(query, "%" + tenGV + "%");
+            if (rs != null) {
+                return rs;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    /**
+     * Thêm giáo viên mới
+     */
+    public boolean themGiaoVien(String maGV, String tenGV, String gioiTinh, 
+            String ngaySinh, String trinhDo, String khoa, String ghiChu) {
+        String query = "INSERT INTO GiaoVien(MaGV, TenGV, GioiTinh, NgaySinh, TrinhDo, Khoa, GhiChu) " +
+                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        return DataProvider.executeNonQuery(query, maGV, tenGV, gioiTinh, 
+                ngaySinh, trinhDo, khoa, ghiChu);
+    }
+    
+    /**
+     * Sửa thông tin giáo viên
+     */
+    public boolean suaGiaoVien(String maGV, String tenGV, String gioiTinh, 
+            String ngaySinh, String trinhDo, String khoa, String ghiChu) {
+        String query = "UPDATE GiaoVien SET TenGV = ?, GioiTinh = ?, NgaySinh = ?, " +
+                      "TrinhDo = ?, Khoa = ?, GhiChu = ? WHERE MaGV = ?";
+        return DataProvider.executeNonQuery(query, tenGV, gioiTinh, ngaySinh, 
+                trinhDo, khoa, ghiChu, maGV);
+    }
+    
+    /**
+     * Xóa giáo viên
+     */
+    public boolean xoaGiaoVien(String maGV) {
+        String query = "DELETE FROM GiaoVien WHERE MaGV = ?";
+        return DataProvider.executeNonQuery(query, maGV);
+    }
+
+    // Phương thức test
+    public static void main(String[] args) {
+        DAL_GiaoVien dal = new DAL_GiaoVien();
+        
+        // Test tìm kiếm giáo viên
+        System.out.println("=== Test tìm kiếm giáo viên ===");
+        try {
+            String tuKhoa = ""; // Để trống để lấy tất cả giáo viên
+            System.out.println("Tìm kiếm với từ khóa: '" + tuKhoa + "'");
+            
+            ResultSet rs = dal.danhSachGiaoVien(tuKhoa);
+            
+            if (rs != null) {
+                boolean coKetQua = false;
+                
+                while (rs.next()) {
+                    coKetQua = true;
+                    System.out.println("\nThông tin giáo viên:");
+                    System.out.println("MaGV: " + rs.getString("MaGV"));
+                    System.out.println("TenGV: " + rs.getString("TenGV"));
+                    System.out.println("GioiTinh: " + rs.getString("GioiTinh"));
+                    System.out.println("NgaySinh: " + rs.getString("NgaySinh"));
+                    System.out.println("TrinhDo: " + rs.getString("TrinhDo"));
+                    System.out.println("Khoa: " + rs.getString("Khoa"));
+                    System.out.println("GhiChu: " + rs.getString("GhiChu"));
+                    System.out.println("---------------");
+                }
+                
+                if (!coKetQua) {
+                    System.out.println("Không tìm thấy giáo viên nào!");
+                }
+            } else {
+                System.out.println("Lỗi khi truy vấn dữ liệu!");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Lỗi SQL: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}

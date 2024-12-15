@@ -1,0 +1,49 @@
+package gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import com.toedter.calendar.JDateChooser;
+import dbconect.DAL_LopHoc;
+
+public class QuanLyLopHocForm extends JFrame {
+    private JPanel mainPanel;
+    private JTable gridview;
+    private JTable gridviewDetail;
+    private DefaultTableModel tableModel;
+    private DefaultTableModel tableModelDetail;
+    
+    private JTextField txtMaLH;
+    private JComboBox<String> cboMaMH;
+    private JComboBox<String> cboMaGV;
+    private JDateChooser dtNgayBatDau;
+    private JDateChooser dtNgayKetThuc;
+    private JSpinner spnSoBuoi;
+    private JTextField txtTenSearch;
+    private JComboBox<String> cboMaHV;
+    
+    private JButton btnThem;
+    private JButton btnSua;
+    private JButton btnXoa;
+    private JButton btnLuu;
+    private JButton btnHuy;
+    private JButton btnLamMoi;
+    private JButton btnThoat;
+    private JButton btnTim;
+    private JButton btnThemHV;
+    private JButton btnXoaHV;
+    
+    private DAL_LopHoc dal;
+    private boolean luu;
+
+    public QuanLyLopHocForm() {
+        dal = new DAL_LopHoc();
+        initComponents();
+        loadComboBoxes();
+        loadData("");
+        setControlState(true);
+    }

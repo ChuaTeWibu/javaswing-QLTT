@@ -1,0 +1,6 @@
+INDEX VERSION 1.134+D:\quanlytrungtam\quanlytrungtamtinhocngoaingu\.metadata\.plugins\org.eclipse.jdt.core
+4086729064.index
+1645674985.index
+1865797976.index
+807423485.index
+2257310682.index

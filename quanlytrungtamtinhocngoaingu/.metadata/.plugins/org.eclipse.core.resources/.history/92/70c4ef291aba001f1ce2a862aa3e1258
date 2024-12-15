@@ -1,0 +1,24 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace DoAn1_QuanLyTrungTam.DAL
+{
+    internal class DAL_Dsdk
+    {
+        public DataTable DanhSachDangKy(string TenHV, string MaHV)
+        {
+            string str = "SELECT c.MaHV, d.TenHV, b.MaMH, a.TenMH " + 
+                         "FROM MonHoc a " + 
+                         "LEFT JOIN LopHoc b ON a.MaMH = b.MaMH " + 
+                         "LEFT JOIN LopHoc_HocVien c ON b.MaLH = c.MaLH " + 
+                         "LEFT JOIN HocVien d ON c.MaHV = d.MaHV " + 
+                         "WHERE d.TenHV LIKE N'%" + TenHV + "%' AND c.MaHV LIKE N'%" + MaHV + "%'";
+            return DataProvider.GetData(str);
+        }
+    }
+}

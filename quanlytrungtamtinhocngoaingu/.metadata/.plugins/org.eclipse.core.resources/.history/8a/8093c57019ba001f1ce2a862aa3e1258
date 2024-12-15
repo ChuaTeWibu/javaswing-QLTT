@@ -1,0 +1,61 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DataProvider {
+
+    // 1. Lấy chuỗi kết nối đến MySQL
+    public static Connection getConnection() throws SQLException {
+        String url = "jdbc:mysql://localhost:3306/quanlytrungtam"; // Thay đổi tên DB và host nếu cần
+        String user = "root"; // Thay "root" bằng user MySQL của bạn
+        String password = "tohkaty01"; // Thay mật khẩu tương ứng
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    // 2. Thực thi lệnh SELECT, trả về ResultSet
+    public static ResultSet getData(String sql) {
+        ResultSet resultSet = null;
+        try {
+            Connection connection = getConnection();
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return resultSet;
+    }
+
+    // 3. Thực thi lệnh INSERT, UPDATE hoặc DELETE
+    public static boolean executeNonQuery(String sql) {
+        try (Connection connection = getConnection();
+             Statement statement = connection.createStatement()) {
+
+            statement.executeUpdate(sql);
+            return true; // Thành công
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false; // Thất bại
+        }
+    }
+    
+    
+    public static void main(String[] args) {
+        // Ví dụ thực hiện câu SELECT
+        System.out.println("----- Kết quả SELECT -----");
+        String selectQuery = "SELECT * FROM taikhoan"; // Thay 'your_table' bằng bảng của bạn
+
+        try {
+            ResultSet rs = DatabaseConnection.getData(selectQuery);
+            while (rs != null && rs.next()) {
+            	System.out.println("MaTK: " + rs.getString("MaTK") + 
+                        ", MatKhau: " + rs.getString("MatKhau") + 
+                        ", Quyen: " + rs.getString("Quyen"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        }
+    
+
+}

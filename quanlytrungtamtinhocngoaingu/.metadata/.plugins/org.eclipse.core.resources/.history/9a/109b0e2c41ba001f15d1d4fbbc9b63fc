@@ -1,0 +1,137 @@
+package gui;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import dbconect.DAL_GiaoVien;
+import com.toedter.calendar.JDateChooser;
+
+public class QuanLyGiaoVienForm extends JFrame {
+    private JPanel mainPanel;
+    private JTable gridview;
+    private DefaultTableModel tableModel;
+    
+    private JTextField txtMaGV;
+    private JTextField txtTenGV;
+    private JComboBox<String> cboGioiTinh;
+    private JDateChooser dtNgaySinh;
+    private JTextField txtTrinhDo;
+    private JTextField txtKhoa;
+    private JTextField txtGhichu;
+    private JTextField txtTenGVSearch;
+    
+    private JButton btnThem;
+    private JButton btnSua;
+    private JButton btnXoa;
+    private JButton btnLuu;
+    private JButton btnHuy;
+    private JButton btnLamMoi;
+    private JButton btnThoat;
+    private JButton btnTim;
+    
+    private DAL_GiaoVien dal;
+    private boolean luu;
+
+    public QuanLyGiaoVienForm() {
+        dal = new DAL_GiaoVien();
+        initComponents();
+        loadGioiTinh();
+        loadData("");
+        setControlState(true);
+    }
+
+    private void initComponents() {
+        setTitle("Quản lý giáo viên");
+        setSize(900, 700);
+        setMinimumSize(new Dimension(900, 700));
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Main Panel
+        mainPanel = new JPanel(new BorderLayout(5, 5));
+        setContentPane(mainPanel);
+
+        // Form Panel (North)
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Add components to form panel
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(new JLabel("Mã giáo viên:"), gbc);
+        gbc.gridx = 1;
+        txtMaGV = new JTextField(15);
+        formPanel.add(txtMaGV, gbc);
+
+        gbc.gridx = 2;
+        formPanel.add(new JLabel("Tên giáo viên:"), gbc);
+        gbc.gridx = 3;
+        txtTenGV = new JTextField(15);
+        formPanel.add(txtTenGV, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        formPanel.add(new JLabel("Giới tính:"), gbc);
+        gbc.gridx = 1;
+        cboGioiTinh = new JComboBox<>();
+        cboGioiTinh.setPreferredSize(new Dimension(150, 25));
+        formPanel.add(cboGioiTinh, gbc);
+
+        gbc.gridx = 2;
+        formPanel.add(new JLabel("Ngày sinh:"), gbc);
+        gbc.gridx = 3;
+        dtNgaySinh = new JDateChooser();
+        dtNgaySinh.setPreferredSize(new Dimension(150, 25));
+        dtNgaySinh.setDateFormatString("dd/MM/yyyy");
+        formPanel.add(dtNgaySinh, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2;
+        formPanel.add(new JLabel("Trình độ:"), gbc);
+        gbc.gridx = 1;
+        txtTrinhDo = new JTextField(15);
+        formPanel.add(txtTrinhDo, gbc);
+
+        gbc.gridx = 2;
+        formPanel.add(new JLabel("Khoa:"), gbc);
+        gbc.gridx = 3;
+        txtKhoa = new JTextField(15);
+        formPanel.add(txtKhoa, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 3;
+        formPanel.add(new JLabel("Ghi chú:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 3;
+        txtGhichu = new JTextField(40);
+        formPanel.add(txtGhichu, gbc);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        btnThem = new JButton("Thêm");
+        btnSua = new JButton("Sửa");
+        btnXoa = new JButton("Xóa");
+        btnLuu = new JButton("Lưu");
+        btnHuy = new JButton("Hủy");
+        btnLamMoi = new JButton("Làm mới");
+        btnThoat = new JButton("Thoát");
+        
+        // Set size for buttons
+        Dimension buttonSize = new Dimension(100, 30);
+        btnThem.setPreferredSize(buttonSize);
+        btnSua.setPreferredSize(buttonSize);
+        btnXoa.setPreferredSize(buttonSize);
+        btnLuu.setPreferredSize(buttonSize);
+        btnHuy.setPreferredSize(buttonSize);
+        btnLamMoi.setPreferredSize(buttonSize);
+        btnThoat.setPreferredSize(buttonSize);
+        
+        buttonPanel.add(btnThem);
+        buttonPanel.add(btnSua);
+        buttonPanel.add(btnXoa);
+        buttonPanel.add(btnLuu);
+        buttonPanel.add(btnHuy);
+        buttonPanel.add(btnLamMoi);
+        buttonPanel.add(btnThoat);

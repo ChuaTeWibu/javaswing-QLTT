@@ -1,0 +1,92 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_HocVien {
+    
+    /**
+     * Lấy danh sách học viên theo tên
+     * @param tenHV Tên học viên cần tìm
+     * @return ResultSet chứa danh sách học viên phù hợp
+     */
+    public ResultSet danhSachHocVien(String tenHV) {
+        // Câu truy vấn tìm kiếm học viên theo tên (tìm kiếm mờ)
+        String query = "SELECT * FROM HocVien WHERE TenHV LIKE ?";
+        return DataProvider.getData(query, "%" + tenHV + "%");
+    }
+    
+    /**
+     * Xóa học viên theo mã
+     * @param maHV Mã học viên cần xóa
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean xoaHocVien(String maHV) {
+        String query = "DELETE FROM HocVien WHERE MaHV = ?";
+        return DataProvider.executeNonQuery(query, maHV);
+    }
+    
+    /**
+     * Thêm học viên mới
+     * @param maHV Mã học viên
+     * @param tenHV Tên học viên
+     * @param dienThoai Số điện thoại
+     * @param diaChi Địa chỉ
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean themHocVien(String maHV, String tenHV, String dienThoai, String diaChi) {
+        String query = "INSERT INTO HocVien(MaHV, TenHV, DienThoai, DiaChi) VALUES (?, ?, ?, ?)";
+        return DataProvider.executeNonQuery(query, maHV, tenHV, dienThoai, diaChi);
+    }
+    
+    /**
+     * Cập nhật thông tin học viên
+     * @param maHV Mã học viên
+     * @param tenHV Tên học viên mới
+     * @param dienThoai Số điện thoại mới
+     * @param diaChi Địa chỉ mới
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    public boolean suaHocVien(String maHV, String tenHV, String dienThoai, String diaChi) {
+        String query = "UPDATE HocVien SET TenHV = ?, DienThoai = ?, DiaChi = ? WHERE MaHV = ?";
+        return DataProvider.executeNonQuery(query, tenHV, dienThoai, diaChi, maHV);
+    }
+
+// // Phương thức test chi tiết
+//    public static void main(String[] args) {
+//        DAL_HocVien dal = new DAL_HocVien();
+//        
+//        // Test tìm kiếm học viên
+//        System.out.println("=== Test tìm kiếm học viên ===");
+//        try {
+//            // Thử tìm kiếm với từ khóa
+//            String tuKhoa = ""; // Để trống để lấy tất cả học viên
+//            System.out.println("Tìm kiếm với từ khóa: '" + tuKhoa + "'");
+//            
+//            ResultSet rs = dal.danhSachHocVien(tuKhoa);
+//            
+//            if (rs != null) {
+//                boolean coKetQua = false;
+//                
+//                while (rs.next()) {
+//                    coKetQua = true;
+//                    System.out.println("\nThông tin học viên:");
+//                    System.out.println("MaHV: " + rs.getString("MaHV"));
+//                    System.out.println("TenHV: " + rs.getString("TenHV"));
+//                    System.out.println("DienThoai: " + rs.getString("DienThoai"));
+//                    System.out.println("DiaChi: " + rs.getString("DiaChi"));
+//                    System.out.println("---------------");
+//                }
+//                
+//                if (!coKetQua) {
+//                    System.out.println("Không tìm thấy học viên nào!");
+//                }
+//            } else {
+//                System.out.println("Lỗi khi truy vấn dữ liệu!");
+//            }
+//            
+//        } catch (SQLException e) {
+//            System.out.println("Lỗi SQL: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+}

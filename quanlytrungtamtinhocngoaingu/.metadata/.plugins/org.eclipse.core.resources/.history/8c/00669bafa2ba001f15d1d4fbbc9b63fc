@@ -1,0 +1,79 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_LopHoc {
+    
+    public ResultSet getDanhSachLopHoc(String tenLop) throws SQLException {
+        // Sửa câu query để phù hợp với tên bảng và cột trong database
+        String sql = "SELECT malop, tenmh, tengv, ngaybatdau, ngayketthuc, sobuoi " +
+                    "FROM lophoc, monhoc, giaovien " +
+                    "WHERE lophoc.mamh = monhoc.mamh " +
+                    "AND lophoc.magv = giaovien.magv " +
+                    "AND malop LIKE ?";
+        return DataProvider.getData(sql, "%" + tenLop + "%");
+    }
+
+    public ResultSet getDanhSachMonHoc() throws SQLException {
+        String sql = "SELECT mamh, tenmh FROM monhoc";
+        return DataProvider.getData(sql);
+    }
+
+    public ResultSet getDanhSachGiaoVien() throws SQLException {
+        String sql = "SELECT magv, tengv FROM giaovien";
+        return DataProvider.getData(sql);
+    }
+
+    public ResultSet getDanhSachHocVien() throws SQLException {
+        String sql = "SELECT mahv, tenhv FROM hocvien";
+        return DataProvider.getData(sql);
+    }
+
+    public ResultSet getDanhSachHocVienTrongLop(String maLop) throws SQLException {
+        String sql = "SELECT hv.mahv, hv.tenhv, hv.dienthoai, hv.diachi " +
+                    "FROM hocvien hv, lophoc_hocvien lhv " +
+                    "WHERE hv.mahv = lhv.mahv AND lhv.malop = ?";
+        return DataProvider.getData(sql, maLop);
+    }
+
+    public boolean themLopHoc(String maLop, String maMH, String maGV, 
+            Date ngayBD, Date ngayKT, int soBuoi) throws SQLException {
+        String sql = "INSERT INTO lophoc(malop, mamh, magv, ngaybatdau, ngayketthuc, sobuoi) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+        return DataProvider.executeNonQuery(sql, maLop, maMH, maGV, ngayBD, ngayKT, soBuoi);
+    }
+
+    public boolean suaLopHoc(String maLop, String maMH, String maGV,
+            Date ngayBD, Date ngayKT, int soBuoi) throws SQLException {
+        String sql = "UPDATE lophoc SET mamh = ?, magv = ?, ngaybatdau = ?, " +
+                    "ngayketthuc = ?, sobuoi = ? WHERE malop = ?";
+        return DataProvider.executeNonQuery(sql, maMH, maGV, ngayBD, ngayKT, soBuoi, maLop);
+    }
+
+    public boolean xoaLopHoc(String maLop) throws SQLException {
+        // Xóa học viên khỏi lớp trước
+        String sql1 = "DELETE FROM lophoc_hocvien WHERE malop = ?";
+        DataProvider.executeNonQuery(sql1, maLop);
+        
+        // Sau đó xóa lớp
+        String sql2 = "DELETE FROM lophoc WHERE malop = ?";
+        return DataProvider.executeNonQuery(sql2, maLop);
+    }
+
+    public boolean themHocVienVaoLop(String maLop, String maHV) throws SQLException {
+        // Kiểm tra học viên đã có trong lớp chưa
+        String sqlCheck = "SELECT COUNT(*) FROM lophoc_hocvien WHERE malop = ? AND mahv = ?";
+        ResultSet rs = DataProvider.getData(sqlCheck, maLop, maHV);
+        if (rs.next() && rs.getInt(1) > 0) {
+            throw new SQLException("Học viên đã có trong lớp này!");
+        }
+        
+        String sql = "INSERT INTO lophoc_hocvien(malop, mahv) VALUES (?, ?)";
+        return DataProvider.executeNonQuery(sql, maLop, maHV);
+    }
+
+    public boolean xoaHocVienKhoiLop(String maLop, String maHV) throws SQLException {
+        String sql = "DELETE FROM lophoc_hocvien WHERE malop = ? AND mahv = ?";
+        return DataProvider.executeNonQuery(sql, maLop, maHV);
+    }
+}

@@ -1,0 +1,77 @@
+package dbconect;
+
+import java.sql.*;
+
+public class DAL_TaiKhoan {
+    
+    public ResultSet kiemTraDangNhap(String maTK, String matKhau, StringBuilder quyen) {
+        String query = "SELECT * FROM TaiKhoan WHERE MaTK = ? AND MatKhau = ?";
+        
+        try {
+            // Sử dụng PreparedStatement thông qua DataProvider
+            ResultSet result = DataProvider.getData(query, maTK, matKhau);
+            
+            if (result != null && result.next()) {
+                quyen.append(result.getString("Quyen"));
+                result.beforeFirst(); // Reset con trỏ về đầu để đọc lại
+            } else {
+                quyen.setLength(0); // Clear StringBuilder
+            }
+            
+            return result;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            quyen.setLength(0); // Clear StringBuilder trong trường hợp lỗi
+            return null;
+        }
+    }
+
+    public static void main(String[] args) {
+        // Tạo đối tượng để test
+        DAL_TaiKhoan dalTaiKhoan = new DAL_TaiKhoan();
+        StringBuilder quyen = new StringBuilder();
+        
+        System.out.println("=== Test 1: Đăng nhập đúng ===");
+        testDangNhap(dalTaiKhoan, "admin", "admin"); // Thay thế bằng tài khoản thật trong DB của bạn
+        
+        System.out.println("\n=== Test 2: Đăng nhập sai ===");
+        testDangNhap(dalTaiKhoan, "wrong", "wrong123");
+        
+        System.out.println("\n=== Test 3: Đăng nhập rỗng ===");
+        testDangNhap(dalTaiKhoan, "", "");
+    }
+    
+    private static void testDangNhap(DAL_TaiKhoan dal, String username, String password) {
+        StringBuilder quyen = new StringBuilder();
+        try {
+            System.out.println("Thử đăng nhập với:");
+            System.out.println("Username: " + username);
+            System.out.println("Password: " + password);
+            
+            ResultSet rs = dal.kiemTraDangNhap(username, password, quyen);
+            
+            if (rs != null) {
+                if (quyen.length() > 0) {
+                    System.out.println("Kết quả: Đăng nhập thành công!");
+                    System.out.println("Quyền: " + quyen.toString());
+                    
+                    while (rs.next()) {
+                        System.out.println("Chi tiết tài khoản:");
+                        System.out.println("- MaTK: " + rs.getString("MaTK"));
+                        System.out.println("- Quyền: " + rs.getString("Quyen"));
+                        // In thêm các thông tin khác nếu cần
+                    }
+                } else {
+                    System.out.println("Kết quả: Sai tên đăng nhập hoặc mật khẩu!");
+                }
+            } else {
+                System.out.println("Kết quả: Lỗi kết nối database!");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Lỗi: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
